@@ -31,28 +31,36 @@ app.post(url, (request, response) => {
 })
 
 app.get(`${url}/:id`, (request, response) => {
-    Note.findById(request.params.id).then(note => {
-        response.json(note)
-    })
+    Note.findById(request.params.id)
+        .then(note => {
+            note ? response.json(note) : response.status(404).end()
+        })
+        .catch(error => {
+            console.log(error)
+            response.status(500).send({ error: 'malformatted id' })
+        })
 })
 
 app.delete(`${url}/:id`, (request, response) => {
-    const id = Number(request.params.id)
-    notes = notes.filter(note => note.id !== id)
-
-    response.status(204).end()
+    Note.findByIdAndRemove(request.params.id)
+        .then(result => {
+            response.status(204).end()
+        })
+        .catch(error => next(error))
 })
 
 app.put(`${url}/:id`, (request, response) => {
-    const id = Number(request.params.id)
-    if (!notes.find(x => x.id === id)) {
-        return response.status(400).json({
-            error: 'not found note'
-        })
-    }
     const body = request.body
-    notes = notes.map(x => x.id === id ? body : x)
-    response.json(body ? body : response.status(404).end())
+    const note = {
+        content: body.content,
+        important: body.important,
+    }
+
+    Note.findByIdAndUpdate(request.params.id, note, { new: true })
+        .then(updatedNote => {
+            response.json(updatedNote)
+        })
+        .catch(error => next(error))
 })
 
 const PORT = process.env.PORT || 3001
