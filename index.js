@@ -2,7 +2,7 @@ const express = require('express')
 const cors = require('cors')
 const app = express()
 const Note = require('./models/note')
-
+const test = ''
 const url = '/api/notes';
 app.use(cors())
 app.use(express.json())
@@ -15,7 +15,8 @@ app.get(url, (request, response) => {
 
 app.post(url, (request, response) => {
     const body = request.body
-    if (!body.content) {
+
+    if (body.content === undefined) {
         return response.status(400).json({ error: 'content missing' })
     }
 
@@ -26,8 +27,8 @@ app.post(url, (request, response) => {
     })
 
     note.save().then(savedNote => {
-        response.json(savedNote)
-    })
+        response.json(savedNote.toJSON())
+    }).catch(error => response.status(400).json({ error: error.message }))
 })
 
 app.get(`${url}/:id`, (request, response) => {
@@ -46,7 +47,7 @@ app.delete(`${url}/:id`, (request, response) => {
         .then(result => {
             response.status(204).end()
         })
-        .catch(error => next(error))
+        .catch(error => response.status(400).json({ error: error.message }))
 })
 
 app.put(`${url}/:id`, (request, response) => {
@@ -60,7 +61,7 @@ app.put(`${url}/:id`, (request, response) => {
         .then(updatedNote => {
             response.json(updatedNote)
         })
-        .catch(error => next(error))
+        .catch(error => response.status(400).json({ error: error.message }))
 })
 
 const PORT = process.env.PORT || 3001
